@@ -36,6 +36,8 @@ void SendDataToServer(double val1, double val2, char op) {
     string data = oss.str();
 
     DWORD bytesWritten = 0;
+    //data.c_str() -> datayý constant char* olarak formatla
+    //pipe'ýn write ucuna yazma iþlemi yap -> BAÞARILI : nonzero dönderir, BAÞARISIZ : 0
     BOOL writeResult = WriteFile(hPipe, data.c_str(), data.size(), &bytesWritten, &overlapped);
     if (!writeResult && GetLastError() != ERROR_IO_PENDING) {
         cerr << "WriteFile failed, GLE=" << GetLastError() << endl;
@@ -44,6 +46,10 @@ void SendDataToServer(double val1, double val2, char op) {
         return;
     }
 
+    //dwMilliseconds :
+    // is INFINITE, the function will return only when the object is signaled.
+    // is 0 , if object not signaled -> wait state'e girme hemen return
+    // is non-zero, object signalled olana göre ya da interval geçene kadar fonksiyon bekler.
     if (WaitForSingleObject(overlapped.hEvent, INFINITE) != WAIT_OBJECT_0) {
         cerr << "WaitForSingleObject failed, GLE=" << GetLastError() << endl;
         CloseHandle(overlapped.hEvent);
