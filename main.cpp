@@ -51,9 +51,19 @@ void SendDataToServer(double val1, double val2, char op) {
         return;
     }
 
+    DWORD bytesTransferred;
     // Keep the main thread running to allow the completion routine to execute.
     while (true) {
-        SleepEx(INFINITE, TRUE);
+        BOOL result = GetOverlappedResultEx(hPipe, &writeOverlapped, &bytesTransferred, INFINITE, TRUE);
+        if (!result) {
+            cerr << "GetOverlappedResultEx failed, GLE=" << GetLastError() << endl;
+            CloseHandle(hPipe);
+            CloseHandle(writeOverlapped.hEvent);
+            return;
+        }
+        if (GetLastError() == WAIT_IO_COMPLETION) {
+            break;
+        }
     }
 }
 
